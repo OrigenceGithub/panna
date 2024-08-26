@@ -1,6 +1,3 @@
-# panna
-
-### 'Paññā' is a Pali word that means "wisdom". It can also mean "knowledge," "insight," "intelligence," "reason," and "recognition".
 
 ### We will use this repository to help us set up a collaborative coding excersice during the interview process.
 
