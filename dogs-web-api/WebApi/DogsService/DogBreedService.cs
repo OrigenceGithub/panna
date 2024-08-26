@@ -6,6 +6,8 @@ namespace WebApi.DogsService
 {
     public interface IDogBreedService
     {
+        Task<Breed> GetBreed(string id);
+        Task<List<Data>> GetHypoAllergenicBreeds();
 
     }
 
@@ -14,9 +16,14 @@ namespace WebApi.DogsService
     {
         private readonly HttpClient _httpClient;
 
-        public DogBreedService(HttpClient httpClient)
+        private readonly ILogger<DogBreedService> _logger;
+
+        public DogBreedService(HttpClient httpClient, ILogger<DogBreedService> logger)
         {
             _httpClient = httpClient;
+            _logger = logger;
+
+
         }
 
         /// <summary>
@@ -26,6 +33,33 @@ namespace WebApi.DogsService
         /// If 'id' does not return a Breed, then return a null object.
         /// </summary>
         /// <param name="id"></param>
+        public async Task<Breed> GetBreed(string id)
+        {
+            string serviceLoc = "https://dogapi.dog/api/v2/breeds/";
+            string url = serviceLoc + id;
+            HttpResponseMessage response = new HttpResponseMessage();
+            try {
+                response = await _httpClient.GetAsync(url);
+            }
+            catch(Exception e)
+            {
+                _logger.LogError($"Error Returned: {e.Message}");
+            }
+            
+            if(!response.IsSuccessStatusCode)
+                return null;
+            else
+            {
+                string responseBody = await response.Content.ReadAsStringAsync();
+                if(responseBody is null)
+                    return null;
+                else
+                    return JsonSerializer.Deserialize<Breed>(responseBody);
+            }
+
+
+
+        }
 
 
 
@@ -39,6 +73,47 @@ namespace WebApi.DogsService
         /// Assume that the total number of pages is 29 for this test.
         /// <param name="hypoallergenic">true or false</param>
         /// </summary>
+        public async Task<List<Data>> GetHypoAllergenicBreeds()
+        {
+            string serviceLoc = "https://dogapi.dog/api/v2/breeds/?page[number]=";
+            List<Data> hypoList = new List<Data>();
+            
+            for(int i = 1; i < 30; i++)
+            {
+                BreedPage newBreed = new BreedPage();
+
+                string url = serviceLoc  + i.ToString();
+                HttpResponseMessage response = new HttpResponseMessage();
+                try {
+                    response = await _httpClient.GetAsync(url);
+                }
+                catch(Exception e)
+                {
+                    _logger.LogError($"Error Returned: {e.Message}");
+                }
+                if(!response.IsSuccessStatusCode)
+                    newBreed = null;
+                else
+                {
+                    string responseBody = await response.Content.ReadAsStringAsync();
+                    if(responseBody is null)
+                        newBreed = null;
+                    else
+                    {
+                        newBreed = JsonSerializer.Deserialize<BreedPage>(responseBody);
+                        var hypoBreeds = newBreed.data.Select(i => i).Where(i => i.attributes.hypoallergenic == true);
+                        hypoList.AddRange(hypoBreeds);
+                        
+                    }
+
+
+                }
+
+            }
+
+            return hypoList;
+            
+        }
 
 
         /// <summary>

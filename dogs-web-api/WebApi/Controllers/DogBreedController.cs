@@ -19,20 +19,17 @@ namespace WebApi.Controllers
 
         [HttpGet]
         [Route("dogbreed/{id}")]
-        public Task<Breed?> Get(string id)
+        public async Task<Breed?> Get(string id)
         {
-            // Call the DogBreedService to get the breed object.
+            return await _dogBreedService.GetBreed(id);
 
-            throw new NotImplementedException();
         }
 
         [HttpGet]
         [Route("dogbreed/hypoallergenic-breeds")]
-        public Task<List<Data>?> GetHypoallergenicBreeds()
+        public async Task<List<Data>?> GetHypoallergenicBreeds()
         {
-            // Call the DogBreedService to get the list of breeds that have the 'hypoallergenic' property set to true.
-
-            throw new NotImplementedException();
+            return await _dogBreedService.GetHypoAllergenicBreeds();
         }
     }
 }
