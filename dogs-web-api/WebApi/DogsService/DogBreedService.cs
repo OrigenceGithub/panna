@@ -1,12 +1,14 @@
 ﻿using WebApi.Models;
 using System.Text.Json;
 using WebApi.Controllers;
+using System.Diagnostics;
 
 namespace WebApi.DogsService
 {
     public interface IDogBreedService
     {
-
+        public Task<IEnumerable<Breed>> GetBreeds();
+        public Task<IEnumerable<Breed>> GetBreedsParallel();
     }
 
 
@@ -39,6 +41,32 @@ namespace WebApi.DogsService
         /// Assume that the total number of pages is 29 for this test.
         /// <param name="hypoallergenic">true or false</param>
         /// </summary>
+        /// 
+        public async Task<IEnumerable<Breed>> GetBreeds()
+        {
+            var sw = Stopwatch.StartNew();
+
+            var ret = new List<Breed>();
+
+            for (int i = 1; i <= 29; i++)
+            {
+                var url = $"https://dogapi.dog/api/v2/breeds/?page[number]={i}";
+               
+                var breedPage = await _httpClient.GetFromJsonAsync<BreedPage>(url);
+
+                var hypoallergenicBreeds = breedPage.data.Where(x => x.attributes.hypoallergenic)
+                    .Select(x => new Breed
+                    {
+                        data = x
+                    });
+
+                ret.AddRange(hypoallergenicBreeds);
+            }
+
+            sw.Stop();
+
+            return ret;
+        }
 
 
         /// <summary>
@@ -49,5 +77,38 @@ namespace WebApi.DogsService
         /// number of pages is 29 for this test.
         /// <param name="hypoallergenic">true or false</param>
         /// </summary>
+        /// 
+        public async Task<IEnumerable<Breed>> GetBreedsParallel()
+        {
+            var sw = Stopwatch.StartNew();
+
+            var ret = new List<Breed>();
+
+            var tasks = new List<Task<BreedPage>>();
+
+            for (int i = 1; i <= 29; i++)
+            {
+                var url = $"https://dogapi.dog/api/v2/breeds/?page[number]={i}";
+
+                tasks.Add(_httpClient.GetFromJsonAsync<BreedPage>(url));
+            }
+
+            var responses = await Task.WhenAll(tasks);
+
+            foreach (var res in responses)
+            {
+                var hypoallergenicBreeds = res.data.Where(x => x.attributes.hypoallergenic)
+                    .Select(x => new Breed
+                    {
+                        data = x
+                    });
+
+                ret.AddRange(hypoallergenicBreeds);
+            }
+
+            sw.Stop();
+
+            return ret;
+        }
     }
 }
