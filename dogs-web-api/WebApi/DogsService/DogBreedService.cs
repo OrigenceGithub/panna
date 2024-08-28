@@ -1,22 +1,25 @@
 ﻿using WebApi.Models;
 using System.Text.Json;
 using WebApi.Controllers;
+using System.Reflection.Metadata.Ecma335;
 
 namespace WebApi.DogsService
 {
     public interface IDogBreedService
     {
-
+         Task<IEnumerable<Data>> GetBreeds(bool hypoallergenic);
     }
 
 
     public class DogBreedService : IDogBreedService
     {
         private readonly HttpClient _httpClient;
+        private readonly ILogger<DogBreedService> _logger;
 
-        public DogBreedService(HttpClient httpClient)
+        public DogBreedService(HttpClient httpClient, ILogger<DogBreedService> logger)
         {
             _httpClient = httpClient;
+            _logger = logger;
         }
 
         /// <summary>
@@ -40,7 +43,35 @@ namespace WebApi.DogsService
         /// <param name="hypoallergenic">true or false</param>
         /// </summary>
 
+        public async Task<IEnumerable<Data>> GetBreeds(bool hypoallergenic)
+        {
+            List<Data> result = new List<Data>();
+            BreedPage page;
+            for (int i = 1; i <= 29; i++)
+            {
+                string uri = $"https://dogapi.dog/api/v2/breeds/?page[number]={i}";
+                try
+                {
+                    var pageresponse = await _httpClient.GetAsync(uri);
 
+                    if (pageresponse.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        page = await pageresponse.Content.ReadFromJsonAsync<BreedPage>();
+                        var breedData = page.data.Where(x => x.attributes.hypoallergenic == true);
+                        result.AddRange(breedData);
+                    }
+                } catch (Exception ex)
+                {
+                    _logger.LogWarning($"Page {i} threw an exception with message " + ex.ToString());
+                }
+
+            }
+            if (result.Count == 0)
+                return null;
+            return result;
+        }
+    }
+        
         /// <summary>
         /// *** CHALLENGE #3 *************************************************************
         /// Lets enhance the performance of Challenge #2 to make the api call to each of the 
@@ -50,4 +81,4 @@ namespace WebApi.DogsService
         /// <param name="hypoallergenic">true or false</param>
         /// </summary>
     }
-}
+

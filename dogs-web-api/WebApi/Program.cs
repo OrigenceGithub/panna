@@ -3,7 +3,8 @@ using WebApi.DogsService;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
+builder.Services.AddTransient<IDogBreedService, DogBreedService>();
+builder.Services.AddHttpClient<DogBreedService>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
