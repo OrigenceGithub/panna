@@ -1,12 +1,11 @@
-﻿using WebApi.Models;
-using System.Text.Json;
-using WebApi.Controllers;
+﻿using System.Text.Json;
+using WebApi.Models;
 
 namespace WebApi.DogsService
 {
     public interface IDogBreedService
     {
-
+        Task<IEnumerable<Breed>> GetBreedsAsync(bool isHypoallergenic = true);
     }
 
 
@@ -39,7 +38,29 @@ namespace WebApi.DogsService
         /// Assume that the total number of pages is 29 for this test.
         /// <param name="hypoallergenic">true or false</param>
         /// </summary>
+        //public async Task<IEnumerable<Breed>> GetBreedsAsync(bool isHypoallergenic = true)
+        //{
+        //    var pageCount = 29;
+        //    var allFilteredBreeds = new List<Breed>();
 
+        //    for (var pageNum = 1; pageNum <= pageCount; pageNum++)
+        //    {
+        //        var url = $"https://dogapi.dog/api/v2/breeds/?page[number]={pageNum}";
+        //        var response = await _httpClient.GetStringAsync(url, CancellationToken.None);
+        //        var breedsPage = JsonSerializer.Deserialize<BreedPage>(response, JsonSerializerOptions.Default)!;
+
+        //        if (breedsPage is null)
+        //        {
+        //            throw new Exception("Breeds page is null.");
+        //        }
+
+        //        var filteredBreeds = breedsPage.data.Where(d => d.attributes.hypoallergenic == isHypoallergenic);
+
+        //        allFilteredBreeds.AddRange(filteredBreeds.Select(d => new Breed { data = d }));
+        //    }
+
+        //    return allFilteredBreeds;
+        //}
 
         /// <summary>
         /// *** CHALLENGE #3 *************************************************************
@@ -49,5 +70,37 @@ namespace WebApi.DogsService
         /// number of pages is 29 for this test.
         /// <param name="hypoallergenic">true or false</param>
         /// </summary>
+        public async Task<IEnumerable<Breed>> GetBreedsAsync(bool isHypoallergenic = true)
+        {
+            var pageCount = 29;
+            var allFilteredBreeds = new List<Breed>();
+            var getTasks = new List<Task<string>>();
+
+            for (var pageNum = 1; pageNum <= pageCount; pageNum++)
+            {
+                var url = $"https://dogapi.dog/api/v2/breeds/?page[number]={pageNum}";
+                var getTask = _httpClient.GetStringAsync(url, CancellationToken.None);
+                getTasks.Add(getTask);
+
+            }
+
+            var result = await Task.WhenAll(getTasks);
+
+            foreach (var response in result)
+            {
+                var breedsPage = JsonSerializer.Deserialize<BreedPage>(response, JsonSerializerOptions.Default)!;
+
+                if (breedsPage is null)
+                {
+                    throw new Exception("Breeds page is null.");
+                }
+
+                var filteredBreeds = breedsPage.data.Where(d => d.attributes.hypoallergenic == isHypoallergenic);
+
+                allFilteredBreeds.AddRange(filteredBreeds.Select(d => new Breed { data = d }));
+            }
+
+            return allFilteredBreeds;
+        }
     }
 }
