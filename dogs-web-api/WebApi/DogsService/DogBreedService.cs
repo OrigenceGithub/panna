@@ -6,7 +6,7 @@ namespace WebApi.DogsService
 {
     public interface IDogBreedService
     {
-
+        public  Task<List<Breed>> GetHypoAllergenics();
     }
 
 
@@ -39,7 +39,23 @@ namespace WebApi.DogsService
         /// Assume that the total number of pages is 29 for this test.
         /// <param name="hypoallergenic">true or false</param>
         /// </summary>
-
+        public async  Task<List<Breed>> GetHypoAllergenics()
+        {
+            List<Breed> breeds = new List<Breed>();
+            for (int i = 1; i <= 29; i++)
+            {
+                var apiResults = await _httpClient.GetFromJsonAsync<BreedPage>("https://dogapi.dog/api/v2/breeds/?page[number]=" + i);
+                if(apiResults == null)
+                {
+                    break;
+                }
+                foreach (var breedData in apiResults.data.Where(data => data.attributes.hypoallergenic == true))
+                {
+                    breeds.Add(new Breed { data = breedData });
+                }
+            }
+            return breeds;
+        }
 
         /// <summary>
         /// *** CHALLENGE #3 *************************************************************

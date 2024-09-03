@@ -14,5 +14,12 @@ namespace WebApi.Test.DogsService
 {
     [TestClass]
     public class DogBreedServiceTests
-    {}
+    {
+    
+        [TestMethod]
+        public void GetsHypoallergenic()
+        {
+
+        }
+    }
 }
