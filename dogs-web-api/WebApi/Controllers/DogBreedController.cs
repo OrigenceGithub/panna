@@ -28,11 +28,18 @@ namespace WebApi.Controllers
 
         [HttpGet]
         [Route("dogbreed/hypoallergenic-breeds")]
-        public Task<List<Data>?> GetHypoallergenicBreeds()
+        public async Task<List<Breed>?> GetHypoallergenicBreeds()
         {
             // Call the DogBreedService to get the list of breeds that have the 'hypoallergenic' property set to true.
+            return await _dogBreedService.GetBreedsByHypoallergenic(true);
+        }
 
-            throw new NotImplementedException();
+        [HttpGet]
+        [Route("dogbreed/hypoallergenic-breeds-parallel")]
+        public async Task<List<Breed>?> GetHypoallergenicBreedsParallel()
+        {
+            // Call the DogBreedService to get the list of breeds that have the 'hypoallergenic' property set to true.
+            return await _dogBreedService.GetBreedsByHypoallergenicParallelForEach(true);
         }
     }
 }
